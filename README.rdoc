@@ -1,16 +1,22 @@
 = simpler
 
-Description goes here.
+[You should probably be using rsruby.  It's a fantastic gem.]
 
-== Note on Patches/Pull Requests
- 
-* Fork the project.
-* Make your feature addition or bug fix.
-* Add tests for it. This is important so I don't break it in a
-  future version unintentionally.
-* Commit, do not mess with rakefile, version, or history.
-  (if you want to have your own version, that is fine but bump version in a commit by itself I can ignore when I pull)
-* Send me a pull request. Bonus points for topic branches.
+simpler ("simple R") is a lightweight wrapper around R.  It is loosely inspired by the original gnuplot and rsruby.  
+
+For directly using R code, or if you can't get rsruby working, this may come in handy.
+
+==Examples
+
+require 'simpler'
+
+Simpler.execute "mean(c(1,2,3))"
+
+
+==Casting
+
+Simpler makes an effort to cast reply values in a sensible way.  If there is one line and it starts with "[1]" 
+
 
 == Copyright
 
