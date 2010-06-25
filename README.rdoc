@@ -10,13 +10,11 @@ For directly using R code, or if you can't get rsruby working, this may come in 
 
 require 'simpler'
 
-Simpler.execute "mean(c(1,2,3))"
-
+Simpler.execute("mean(c(1,2,3))").to_f # -> 2.0
 
 ==Casting
 
-Simpler makes an effort to cast reply values in a sensible way.  If there is one line and it starts with "[1]" 
-
+All replies are of class Simpler::String, so casting can be done in a way that works for you by defining your own methods.
 
 == Copyright
 
