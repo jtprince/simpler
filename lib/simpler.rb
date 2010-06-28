@@ -1,12 +1,14 @@
 require 'open3'
+require 'tmpdir'
 
 class Array
-  def to_r
-    var = "ruby#{self.object_id}"
-    convert = "#{var} <- c(#{self.join(',')})\n"
-    [var, convert]
+  def to_r(varname=nil)
+    varname ||= Simpler.varname(self)
+    "#{varname} <- c(#{self.join(',')})\n"
   end
 end
+
+class Simpler ; end
 
 class Simpler::String < String
 
@@ -15,7 +17,6 @@ class Simpler::String < String
     gsub(/^\[\d+\] /,'')
   end
 
-  # 
   def array_cast
     self.chomp.split("\n").rm_leader.split(" ")
   end
@@ -30,35 +31,106 @@ class Simpler::String < String
 end
 
 class Simpler
+  module Plot
+
+    def plot(file_w_extension, opts={}, &block)
+      device = self.class.filename_to_plottype(file_w_extension)
+      opts_as_ropts = opts.map {|k,v| "#{k}=#{r_format(v)}"}
+      string = "#{device}(#{file_w_extension.inspect}, #{opts_as_ropts.join(', ')})\n"
+      string << block.call << "\n"
+      string << "dev.off()\n"
+      string
+    end
+
+  end
+  include Plot
+
+  RPLOTS_FILE = "Rplots.pdf"
+  PDF_VIEWER = "evince"
+
+  # returns the variable name of the object
+  def self.varname(obj)
+    "rb#{obj.object_id}"
+  end
+
+  # returns it as a symbol, currently recognizes pdf, png, svg
+  def self.filename_to_plottype(name)
+    name.match(/\.([^\.]+)$/)[1].downcase.to_sym
+  end
 
   attr_accessor :commands
-  def initialize(commands=[])
+  attr_accessor :pdf_viewer
+
+  def initialize(commands=[], opts={:pdf_viewer => PDF_VIEWER})
+    @pdf_viewer = opts[:pdf_viewer]
     @commands = commands
   end
 
-  def add(*args, &block)
-    (vars, conversion_code) = args.map(&:to_r).inject([[],[]]) {|ar, double| [0,1].each {|i| ar[i].push(double[i]) } ; ar }
-    @commands << conversion_code.join("\n")
-    @commands << block.call(*vars)
+  # returns [vars, conversion_code]
+  def convert(args)
+    args.map
   end
 
-
-  def execute(cmds=nil)
-    case cmds
-    when Array
-      @commands.push(*cmds)
+  def r_format(object)
+    case object
     when String
-      @commands << cmds
+      object.inspect
+    when Numeric
+      object.to_s
+    else
+      object.to_s
     end
+  end
+
+  # displays the Rplots.pdf file at the end of execution
+  def show!(string=nil)
+    if File.exist?(RPLOTS_FILE)
+      original_mtime = File.mtime(RPLOTS_FILE)
+    end
+    reply = execute!(string)
+    system "#{@pdf_viewer} #{RPLOTS_FILE} &"
+
+    reply
+  end
+
+  # pushes string onto command array (if given), executes all commands, and
+  # clears the command array.
+  def run!(string=nil)
+    @commands.push(string) if string
     reply = nil
     Open3.popen3("Rscript -") do |stdin, stdout, stderr|
       stdin.puts @commands.map {|v| v + "\n"}.join
       stdin.close_write
       reply = stdout.read 
     end
-    reply
+    @commands.clear
+    Simpler::String.new(reply)
   end
 
-  alias_method '[]'.to_sym, :execute
+  # pushes string onto command array (if given), executes all commands, and
+  # clears the command array.
+  def run!(string=nil)
+    @commands.push(string) if string
+    reply = nil
+    Open3.popen3("Rscript -") do |stdin, stdout, stderr|
+      stdin.puts @commands.map {|v| v + "\n"}.join
+      stdin.close_write
+      reply = stdout.read 
+    end
+    @commands.clear
+    Simpler::String.new(reply)
+  end
 
+
+
+  # returns self for chaining
+  def with(*args, &block)
+    var_names = args.map {|v| Simpler.varname(v) }
+    conversion_code = args.map {|v| v.to_r << "\n" }
+    (vars, conversion_code) = convert(args) 
+    @commands << conversion_code.join("\n")
+    @commands << block.call(*vars)
+    self
+  end
+ 
 end

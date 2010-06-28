@@ -10,7 +10,26 @@ For directly using R code, or if you can't get rsruby working, this may come in 
 
 require 'simpler'
 
-Simpler.execute("mean(c(1,2,3))").to_f # -> 2.0
+Basic execution (Raw input in, raw input out)
+
+    sr = Simpler.new
+    sr.execute!("mean(c(1,2,3))") #  "[1] 2\n"  (a Simpler::String object)
+
+Using ruby variables (calculating correlation coefficient):
+
+    xv = [1,2,7]
+    yv = [3,4,8]
+    reply = sr[xv,yv] do |x,y|
+      %Q{
+        cor(#{x},#{y})
+      }
+    end
+
+==Input
+
+    def Array
+
+    
 
 ==Casting
 
