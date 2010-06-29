@@ -1,35 +1,38 @@
 = simpler
 
-[You should probably be using rsruby.  It's a fantastic gem.]
+simpler ("simple R") is a lightweight wrapper that calls R (really Rscript)
+from within ruby.  It is designed to favor R in syntax.
 
-simpler ("simple R") is a lightweight wrapper around R.  It is loosely inspired by the original gnuplot and rsruby.  
+=== Why use this rather than rsruby?  
 
-For directly using R code, or if you can't get rsruby working, this may come in handy.
+You should probably be using rsruby--it's a fantastic gem.  However, if you
+want to code using more of an R code sytax (e.g., to cut and paste R code and
+have it just work), or if you can't get rsruby working, this gem may be useful
+to you.
 
-==Examples
+== Examples
 
 require 'simpler'
 
 Basic execution (Raw input in, raw input out)
 
     sr = Simpler.new
-    sr.execute!("mean(c(1,2,3))") #  "[1] 2\n"  (a Simpler::String object)
+    sr.execute!("mean(c(1,2,3))") # -> "[1] 2\n"  (a Simpler::Reply object)
 
 Using ruby variables (calculating correlation coefficient):
 
     xv = [1,2,7]
     yv = [3,4,8]
-    reply = sr[xv,yv] do |x,y|
-      %Q{
-        cor(#{x},#{y})
-      }
+    reply = sr.go(xv,yv) do |x,y|
+      "cor(#{x},#{y})"
     end
+    reply # -> "[1] 0.9994238\n"
 
-==Input
+For plotting on the fly (RScript)
 
-    def Array
+== Credit
 
-    
+Simpler is loosely inspired by the original gnuplot and, of course, the excellent rsruby. 
 
 ==Casting
 

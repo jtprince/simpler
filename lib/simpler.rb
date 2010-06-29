@@ -1,5 +1,7 @@
 require 'open3'
-require 'tmpdir'
+require 'simpler/data_frame'
+require 'simpler/plot'
+require 'simpler/reply'
 
 class Array
   def to_r(varname=nil)
@@ -8,41 +10,7 @@ class Array
   end
 end
 
-class Simpler ; end
-
-class Simpler::String < String
-
-  # removes the [1] from the line
-  def rm_leader
-    gsub(/^\[\d+\] /,'')
-  end
-
-  def array_cast
-    self.chomp.split("\n").rm_leader.split(" ")
-  end
-
-  def to_f
-  end
-
-  def to_i
-    rm_leader.to_f
-  end
-
-end
-
 class Simpler
-  module Plot
-
-    def plot(file_w_extension, opts={}, &block)
-      device = self.class.filename_to_plottype(file_w_extension)
-      opts_as_ropts = opts.map {|k,v| "#{k}=#{r_format(v)}"}
-      string = "#{device}(#{file_w_extension.inspect}, #{opts_as_ropts.join(', ')})\n"
-      string << block.call << "\n"
-      string << "dev.off()\n"
-      string
-    end
-
-  end
   include Plot
 
   RPLOTS_FILE = "Rplots.pdf"
@@ -66,11 +34,6 @@ class Simpler
     @commands = commands
   end
 
-  # returns [vars, conversion_code]
-  def convert(args)
-    args.map
-  end
-
   def r_format(object)
     case object
     when String
@@ -87,9 +50,8 @@ class Simpler
     if File.exist?(RPLOTS_FILE)
       original_mtime = File.mtime(RPLOTS_FILE)
     end
-    reply = execute!(string)
+    reply = run!(string)
     system "#{@pdf_viewer} #{RPLOTS_FILE} &"
-
     reply
   end
 
@@ -104,7 +66,7 @@ class Simpler
       reply = stdout.read 
     end
     @commands.clear
-    Simpler::String.new(reply)
+    Simpler::Reply.new(reply)
   end
 
   # pushes string onto command array (if given), executes all commands, and
@@ -118,19 +80,20 @@ class Simpler
       reply = stdout.read 
     end
     @commands.clear
-    Simpler::String.new(reply)
+    Simpler::Reply.new(reply)
   end
 
-
-
   # returns self for chaining
-  def with(*args, &block)
-    var_names = args.map {|v| Simpler.varname(v) }
-    conversion_code = args.map {|v| v.to_r << "\n" }
-    (vars, conversion_code) = convert(args) 
-    @commands << conversion_code.join("\n")
-    @commands << block.call(*vars)
+  def with(*objects, &block)
+    var_names = objects.map {|v| Simpler.varname(v) }
+    conversion_code = objects.map {|v| v.to_r }
+    @commands.push(*conversion_code)
+    @commands << block.call(*var_names)
     self
   end
  
+  def go(*objects, &block)
+    with(*objects, &block).run!
+  end
+
 end
