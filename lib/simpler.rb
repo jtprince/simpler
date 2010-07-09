@@ -69,20 +69,6 @@ class Simpler
     Simpler::Reply.new(reply)
   end
 
-  # pushes string onto command array (if given), executes all commands, and
-  # clears the command array.
-  def run!(string=nil)
-    @commands.push(string) if string
-    reply = nil
-    Open3.popen3("Rscript -") do |stdin, stdout, stderr|
-      stdin.puts @commands.map {|v| v + "\n"}.join
-      stdin.close_write
-      reply = stdout.read 
-    end
-    @commands.clear
-    Simpler::Reply.new(reply)
-  end
-
   # returns self for chaining
   def with(*objects, &block)
     var_names = objects.map {|v| Simpler.varname(v) }
@@ -91,9 +77,15 @@ class Simpler
     @commands << block.call(*var_names)
     self
   end
+
+  def show_with!(*objects, &block)
+    with(*objects, &block).show!
+  end
  
-  def go(*objects, &block)
+  def run_with!(*objects, &block)
     with(*objects, &block).run!
   end
+
+  alias_method :go!, :run_with!
 
 end
