@@ -7,13 +7,12 @@ require 'rcov/rcovtask'
 
 Jeweler::Tasks.new do |gem|
   gem.name = "simpler"
-  gem.summary = %Q{TODO: one-line summary of your gem}
-  gem.description = %Q{TODO: longer description of your gem}
+  gem.summary = %Q{simpler ("simple R")- A low-tech method to run R scripts.  Allows you to basically copy and paste R code and run it.}
+  gem.description = %Q{you should check out rsruby first.  This is a very low-tech way to run R.  It does have the advantage of being able to run R code essentially unchanged.}
   gem.email = "jtprince@gmail.com"
   gem.homepage = "http://github.com/jtprince/simpler"
   gem.authors = ["John Prince"]
-  gem.add_development_dependency "bacon", ">= 0"
-  # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
+  gem.add_development_dependency "spec/more", ">= 0"
 end
 
 Rake::TestTask.new(:spec) do |spec|
