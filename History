@@ -1,4 +1,8 @@
 == 0.0.1 / 2010-07-09
 
-* initial release
+* initial release (as a gem)
 * supporting array -> vector and dataframe .to_r methods
+
+== 0.0.3 / 2010-07-09
+
+* eliminate warning
