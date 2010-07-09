@@ -12,23 +12,39 @@ to you.
 
 == Examples
 
-require 'simpler'
+FYI - the API is still unstable.
 
-Basic execution (Raw input in, raw input out)
+==== Basic execution (Raw input, raw output)
 
-    sr = Simpler.new
-    sr.execute!("mean(c(1,2,3))") # -> "[1] 2\n"  (a Simpler::Reply object)
+    require 'simpler'
+    simpler = Simpler.new
+    simpler.run!("mean(c(1,2,3))") # -> "[1] 2\n"  (a Simpler::Reply object)
 
-Using ruby variables (calculating correlation coefficient):
+==== Using ruby variables (calculating correlation coefficient):
 
     xv = [1,2,7]
     yv = [3,4,8]
-    reply = sr.go(xv,yv) do |x,y|
-      "cor(#{x},#{y})"
-    end
-    reply # -> "[1] 0.9994238\n"
+    reply = simpler.with(xv,yv) {|x,y|  "cor(#{x},#{y})"  }.run!   # -> "[1] 0.9994238\n"
 
-For plotting on the fly (RScript)
+==== Show a plot
+
+"Rscript" writes plotting commands that would normally go to an X window to "Rplots.pdf".  *show!* merely executes your code and opens Rplots.pdf with @pdf_viewer.  It's low tech, but it works.
+
+    simpler.pdf_viewer = "acroread"
+    simpler.with(xv,yv) {|x,y|  "plot(#{x}, #{y})"  }.show!
+
+==== Using DataFrames
+
+    hash = {
+      :one => [1,2,6,7],
+      :two => [3,4,2,9],
+      :three => [3,1,1,7],
+    }
+
+    df = Simpler::DataFrame.new(hash)
+    simpler.with(df) {|d|  "plot(#{d})" }.show!
+
+DataFrame also supports named rows and specifying directly column names.
 
 == Credit
 
@@ -36,7 +52,7 @@ Simpler is loosely inspired by the original gnuplot and, of course, the excellen
 
 ==Casting
 
-All replies are of class Simpler::String, so casting can be done in a way that works for you by defining your own methods.
+All replies are of class Simpler::Reply, so casting can be done in a way that works for you by defining your own methods.
 
 == Copyright
 

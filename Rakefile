@@ -12,7 +12,7 @@ Jeweler::Tasks.new do |gem|
   gem.email = "jtprince@gmail.com"
   gem.homepage = "http://github.com/jtprince/simpler"
   gem.authors = ["John Prince"]
-  gem.add_development_dependency "spec/more", ">= 0"
+  gem.add_development_dependency "spec-more", ">= 0"
 end
 
 Rake::TestTask.new(:spec) do |spec|
