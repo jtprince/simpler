@@ -47,7 +47,7 @@ FYI - the API is still unstable.
 ==== When Errors Arise
 
 On an R error, raises a Simpler::RError that returns the R error message and
-shows the R code submitted
+shows the R code submitted. (the @command queue is still cleared)
 
     simpler.run!("plot(c(1,2,3),c(1,2)")
 
