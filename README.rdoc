@@ -44,6 +44,13 @@ FYI - the API is still unstable.
     df = Simpler::DataFrame.new(hash)
     simpler.with(df) {|d|  "plot(#{d})" }.show!
 
+==== When Errors Arise
+
+On an R error, raises a Simpler::RError that returns the R error message and
+shows the R code submitted
+
+    simpler.run!("plot(c(1,2,3),c(1,2)")
+
 DataFrame also supports named rows and specifying directly column names.
 
 == Credit
