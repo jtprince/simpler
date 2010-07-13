@@ -55,17 +55,35 @@ class Simpler
     reply
   end
 
+  def error_message(error_string, r_code)
+    error_message = ""
+    error_message << "\n"
+    error_message << "*************************** Error inside R *****************************\n"
+    error_message << error_string
+    error_message << "------------------------- [R code submitted] ---------------------------\n"
+    error_message << r_code
+    error_message << "------------------------------------------------------------------------\n"
+    error_message
+  end
+
+
   # pushes string onto command array (if given), executes all commands, and
   # clears the command array.
   def run!(string=nil)
     @commands.push(string) if string
     reply = nil
+    error = nil
+    cmds_to_run = @commands.map {|v| v + "\n"}.join
     Open3.popen3("Rscript -") do |stdin, stdout, stderr|
-      stdin.puts @commands.map {|v| v + "\n"}.join
+      stdin.puts cmds_to_run
       stdin.close_write
+      error = stderr.read
       reply = stdout.read 
     end
     @commands.clear
+    if error.size > 0
+      raise Simpler::RError, error_message(error, cmds_to_run)
+    end
     Simpler::Reply.new(reply)
   end
 
@@ -87,5 +105,8 @@ class Simpler
   end
 
   alias_method :go!, :run_with!
+
+  class RError < StandardError
+  end
 
 end

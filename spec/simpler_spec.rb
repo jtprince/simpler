@@ -20,6 +20,17 @@ describe "Simpler" do
     reply.chomp.is "[1] 1.25"
   end
 
+  it 'raises a useful Simpler::RError on an R error and shows the submitted R code' do
+    code_matches = { "mean(unnamed_variable)" => %r{Error in mean.*: object .* not found},
+      "plsdf()" => %r{could not find function},
+      "plot(c(1,2), c(2))" => %r{'x' and 'y' lengths differ},
+    }
+    code_matches.each do |code, matches|
+      message = lambda { @r.run!(code) }.should.raise(Simpler::RError).message
+      message.should.match(matches)
+      message.should.include code
+    end
+  end
 end
 
 describe 'making data frames' do
