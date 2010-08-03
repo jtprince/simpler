@@ -13,6 +13,7 @@ Jeweler::Tasks.new do |gem|
   gem.homepage = "http://github.com/jtprince/simpler"
   gem.authors = ["John Prince"]
   gem.add_development_dependency "spec-more", ">= 0"
+  gem.has_rdoc = 'yard'
 end
 
 Rake::TestTask.new(:spec) do |spec|

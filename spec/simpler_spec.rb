@@ -16,7 +16,7 @@ describe "Simpler" do
   end
 
   it 'can get a reply' do
-    reply = @r.run!("typos = c(2,3,0,3,1,0,0,1)\nmean(typos)\nhist(typos)")
+    reply = @r.eval!{"typos = c(2,3,0,3,1,0,0,1)\nmean(typos)\nhist(typos)"}
     reply.chomp.is "[1] 1.25"
   end
 
@@ -26,7 +26,7 @@ describe "Simpler" do
       "plot(c(1,2), c(2))" => %r{'x' and 'y' lengths differ},
     }
     code_matches.each do |code, matches|
-      message = lambda { @r.run!(code) }.should.raise(Simpler::RError).message
+      message = lambda { @r.eval!{code} }.should.raise(Simpler::RError).message
       message.should.match(matches)
       message.should.include code
     end
@@ -51,7 +51,7 @@ wetness             6   2     1
 relative humidity   7   9     7
 }
     df = Simpler::DataFrame.new(@hash, @row_names, @col_names)
-    as_data_frame = Simpler.new.with(df) {|df| df }.run!
+    as_data_frame = Simpler.new.eval!(df) {|df| df }
     as_data_frame.is expected
   end
 
@@ -63,7 +63,7 @@ relative humidity   7   9     7
 4   7   9     7
 }
     df = Simpler::DataFrame.new(@hash, nil, @col_names)
-    as_data_frame = Simpler.new.with(df) {|df| df }.run!
+    as_data_frame = Simpler.new.eval!(df) {|df| df }
     as_data_frame.is expected
   end
 end
@@ -81,13 +81,13 @@ describe 'making plots' do
   it 'has convenience wrappers for plotting to file' do
     @exts.each do |ext|
       file = @file + "." + ext
-      @r.with(@x, @y) do |x,y|
+      @r.eval!(@x, @y) do |x,y|
         @r.plot(file) do
           %Q{
             plot(#{x},#{y}, main="#{ext} scatterplot example", col=rgb(0,100,0,50,maxColorValue=255), pch=16)
           }
         end
-      end.run!
+      end
       File.exist?(file).is true
       IO.read(@file + ".svg").matches(/svg/) if ext == :svg
       File.unlink(file)
@@ -116,9 +116,9 @@ describe 'showing plots' do
   it 'can disply plots' do
     ok $SYSTEM_CALL.nil?
 
-    @r.with(@x, @y) do |x,y| 
+    @r.show!(@x, @y) do |x,y| 
       "plot(#{x}, #{y})"
-    end.show!
+    end
 
     # this shows that we've made a system call to visualize the data
     ok !$SYSTEM_CALL.nil?
@@ -127,7 +127,7 @@ end
 
 describe 'ancillary functions' do
   it 'can get the device from the filename' do
-    Simpler.filename_to_plottype("bob.the.pdf").is :pdf
-    Simpler.filename_to_plottype("larry.the.svg").is :svg
+    Simpler::Plot.filename_to_plottype("bob.the.pdf").is :pdf
+    Simpler::Plot.filename_to_plottype("larry.the.svg").is :svg
   end
 end

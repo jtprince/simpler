@@ -12,26 +12,33 @@ to you.
 
 == Examples
 
-FYI - the API is still unstable.
+FYI - the API is still a little unstable.
 
 ==== Basic execution (Raw input, raw output)
 
     require 'simpler'
-    simpler = Simpler.new
-    simpler.run!("mean(c(1,2,3))") # -> "[1] 2\n"  (a Simpler::Reply object)
+
+    r = Simpler.new
+    r.eval! { "mean(c(1,2,3))" } # -> "[1] 2\n"  (a Simpler::Reply object)
 
 ==== Using ruby variables (calculating correlation coefficient):
 
-    xv = [1,2,7]
-    yv = [3,4,8]
-    reply = simpler.with(xv,yv) {|x,y|  "cor(#{x},#{y})"  }.run!   # -> "[1] 0.9994238\n"
+    x = [1,2,7]
+    y = [3,4,8]
+    reply = r.eval!(x,y) {|xr,yr|  "cor(#{xr},#{yr})"  }   # -> "[1] 0.9994238\n"
+
+Any object that has a #to_r method can be passed in.  Currently, Array and
+Simpler::DataFrame are the only objects with this method defined, but one can
+go really far with only these two data types.
 
 ==== Show a plot
 
-"Rscript" writes plotting commands that would normally go to an X window to "Rplots.pdf".  *show!* merely executes your code and opens Rplots.pdf with @pdf_viewer.  It's low tech, but it works.
+Simpler uses <i>Rscript</i> to run R commands.  So, all plots that would
+normally go to X11 are saved to "Rplots.pdf".  *show!* is precisly the same as
+*eval!*, but it also opens "Rplots.pdf" with <i>@pdf_viewer</i>:
 
-    simpler.pdf_viewer = "acroread"
-    simpler.with(xv,yv) {|x,y|  "plot(#{x}, #{y})"  }.show!
+    r.pdf_viewer = "acroread"
+    r.show!(x,y) {|xr,yr| "plot(#{xr}, #{yr})" }
 
 ==== Using DataFrames
 
@@ -42,16 +49,16 @@ FYI - the API is still unstable.
     }
 
     df = Simpler::DataFrame.new(hash)
-    simpler.with(df) {|d|  "plot(#{d})" }.show!
+    r.show!(df) {|dfr|  "plot(#{dfr})" }
+
+One can also make a data frame from an array of structs with Simpler.from_structs
 
 ==== When Errors Arise
 
 On an R error, raises a Simpler::RError that returns the R error message and
 shows the R code submitted. (the @command queue is still cleared)
 
-    simpler.run!("plot(c(1,2,3),c(1,2)")
-
-DataFrame also supports named rows and specifying directly column names.
+    r.eval! { "plot(c(1,2,3),c(1,2))" }
 
 == Credit
 

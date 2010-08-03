@@ -23,3 +23,5 @@ pkg
 .Rhistory
 Rplots.pdf
 *.gemspec
+.yardoc
+doc
