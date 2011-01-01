@@ -19,7 +19,7 @@ class Simpler
   # @param [Object] object a ruby object,  
   # @return [String] the variable name of the object
   def self.varname(obj)
-    "rb#{obj.object_id}"
+    "rb#{obj.object_id}".gsub(/-/,"")
   end
 
   attr_accessor :commands
