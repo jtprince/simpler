@@ -2,11 +2,16 @@ require 'spec_helper'
 
 require 'simpler'
 
+DEFAULT_RPLOT_FILE = "Rplots.pdf"
 describe "Simpler" do
   before do
     @typos = [2,3,0,3,1,0,0,1]
     @rate = [2,4,0,3,1,3,0,0]
     @r = Simpler.new
+  end
+
+  after do
+    File.unlink(DEFAULT_RPLOT_FILE) if File.exist?(DEFAULT_RPLOT_FILE)
   end
 
   it "can create valid commands" do
@@ -78,9 +83,13 @@ describe 'making plots' do
     @r = Simpler.new
   end
 
+  after do
+    File.unlink(DEFAULT_RPLOT_FILE) if File.exist?(DEFAULT_RPLOT_FILE)
+  end
+
   it 'has convenience wrappers for plotting to file' do
     @exts.each do |ext|
-      file = @file + "." + ext
+      file = @file + "." + ext.to_s
       @r.eval!(@x, @y) do |x,y|
         @r.plot(file) do
           %Q{
@@ -111,6 +120,7 @@ describe 'showing plots' do
     module ::Kernel
       alias_method :system, :old_system
     end
+    File.unlink(DEFAULT_RPLOT_FILE) if File.exist?(DEFAULT_RPLOT_FILE)
   end
 
   it 'can disply plots' do
