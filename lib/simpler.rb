@@ -1,16 +1,27 @@
 require 'open3'
+require 'tempfile'
 require 'simpler/data_frame'
 require 'simpler/plot'
 require 'simpler/reply'
 
 class Array
+
   def to_r(varname=nil)
     varname ||= Simpler.varname(self)
-    "#{varname} <- c(#{self.join(',')})\n"
+    if self.size > Simpler::MIN_SIZE_WRITE_TO_FILE
+      ......
+      Tempfile
+      if self.
+    else
+      "#{varname} <- c(#{self.join(',')})\n"
+    end
   end
+
 end
 
 class Simpler
+  MIN_SIZE_WRITE_TO_FILE = 1000
+
   include Plot
 
   RPLOTS_FILE = "Rplots.pdf"
@@ -47,14 +58,12 @@ class Simpler
   # @example pass in variables (roughly equivalent)
   #   x = [1,2,3]
   #   y = [4,5,6]
-  #   r.eval!(x,y) do |xr,yr| 
-  #     %Q{
-  #       ttest = t.test(#{xr}, #{yr})
+  #   r.eval!(x => :xr, y => :yr) do 
+  #     "
+  #       ttest = t.test(xr, yr)
   #       ttest$p.value
-  #     } 
+  #     " 
   #   end     # -> "[1] 0.02131164\n"
-  #
-  # (see Simpler#with)
   def eval!(*objects, &block)
     with(*objects, &block).run!
   end
@@ -79,7 +88,6 @@ class Simpler
   end
 
   # @param [*Objects] objects list of objects
-  # @yield [*r_varnames] yields the R name of each variable (see Simpler.varname)
   # @return [Simpler] returns self for chaining
   # @example chaining
   #   reply = r.with(dataframe) do |df|
@@ -88,19 +96,24 @@ class Simpler
   #     %Q{ ... something with #{xy} #{yr} #{zr} ... }
   #   end.eval!
   #   # can also .show!
-  def with(*objects, &block)
-    var_names = objects.map {|v| Simpler.varname(v) }
-    conversion_code = objects.map {|v| v.to_r }
+  def with(name_map={}, &block)
+    conversion_code = name_map.map do |k,v| 
+      (sym, obj) = [k,v].partition {|obj| obj.is_a?(Symbol) }
+      obj.to_r(sym)
+    end
     @commands.push(*conversion_code)
     unless block.nil?
-      @commands << block.call(*var_names)
+      @commands << block.call
     end
     self
   end
 
+  alias_method "<<".to_sym, :with
+
   # executes all commands and clears the command array.
   # @return [Simpler::Reply] a String subclass
-  def run!
+  def run!(*commands)
+    @commands.push(*commands)
     reply = nil
     error = nil
     cmds_to_run = @commands.map {|v| v + "\n"}.join
@@ -116,6 +129,8 @@ class Simpler
     end
     Simpler::Reply.new(reply)
   end
+
+  alias_method '>>'.to_sym, run!
 
   # formats strings and numbers to fit inside R code (this is for Strings and
   # numbers mainly in inclusion in options)

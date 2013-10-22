@@ -3,33 +3,53 @@
 simpler ("simple R") is a lightweight wrapper that calls R (really Rscript)
 from within ruby.  It is designed to favor R in syntax.
 
-=== Why use this rather than rsruby?  
+This is still very pre-alpha and the interface is subject to change.
 
-You should probably be using rsruby--it's a fantastic gem.  However, if you
-want to code using more of an R code sytax (e.g., to cut and paste R code and
-have it just work), or if you can't get rsruby working, this gem may be useful
-to you.
+=== RSRuby, RinRuby, or Simpler?
+
+You should probably take a look at rsruby--it's a fantastic gem.  Embedding R,
+rather than calling out to R can make calls 10X faster (according to {Ryan
+Davis}[http://www.ruby-forum.com/topic/670136#969929]).  Plus, if you need to
+evaluate R code with rsruby, you can use this kind of call:
+
+    RSRuby.instance.eval_R r_src
+
+However, if you want to work with a system designed for using native R code,
+or if you can't get rsruby compiling properly, RinRuby or Simpler may be
+useful to you.
+
+RinRuby[https://sites.google.com/a/ddahl.org/rinruby-users/] has the same
+design goals as Simpler and is much more thorough in its implementation and
+execution.  You should definitely take a look at RinRuby. 
+
+Simpler is very simple code that uses Rscript (R's scripting command) to plot
+R code.  If a robust, minimalist approach appeals to you, maybe simpler is for
+you.  I like to use it when I'm not using RSRuby or RinRuby.
 
 == Examples
 
-FYI - the API is still a little unstable.
+(the API is still unstable)
 
 ==== Basic execution (Raw input, raw output)
 
     require 'simpler'
 
     r = Simpler.new
-    r.eval! { "mean(c(1,2,3))" } # -> "[1] 2\n"  (a Simpler::Reply object)
-
+    r >> "mean(c(1,2,3))"   # -> "[1] 2\n"  (a Simpler::Reply object)
+    
 ==== Using ruby variables (calculating correlation coefficient):
 
     x = [1,2,7]
     y = [3,4,8]
-    reply = r.eval!(x,y) {|xr,yr|  "cor(#{xr},#{yr})"  }   # -> "[1] 0.9994238\n"
+    # variables are given a symbol name
+    reply = r.eval!(x => :xr, y => :yr) { "cor(xr,yr)" }   # -> "[1] 0.9994238\n"
+    # the naming can be in any order, so in ruby > 1.9, this is valid:
+    reply = r.eval!(xr: x, yr: y) { "cor(xr,yr)" }
 
-Any object that has a <i>to_r</i> method can be passed in.  Currently, Array and
-Simpler::DataFrame are the only objects with this method defined, but one can
-go really far with only these two data types.
+Any object that has a <i>to_r</i> method can be passed in.  Currently, Array
+and Simpler::DataFrame are the only objects with this method defined, but that
+actually covers a lot of ground.  Easy to define your own to_r method for
+special data as needed.
 
 ==== Show a plot
 
@@ -49,9 +69,9 @@ normally go to X11 are saved to "Rplots.pdf".  *show!* is precisly the same as
     }
 
     df = Simpler::DataFrame.new(hash)
-    r.show!(df) {|dfr|  "plot(#{dfr})" }
+    r.show!(df => :dfr) { "plot(dfr)" }
 
-One can also make a data frame from an array of structs with Simpler.from_structs
+One can also make a data frame from an array of structs with Simpler::DataFrame.from_structs
 
 ==== When Errors Arise
 
@@ -63,11 +83,16 @@ shows the R code submitted. (the @command queue is still cleared)
 
 == Credit
 
-Simpler is loosely inspired by the original gnuplot and, of course, the excellent rsruby. 
+Simpler is loosely inspired by the original gnuplot and, of course, the
+excellent rsruby.  I ran into RinRuby after writing Simpler: I probably
+wouldn't have written Simpler had I seen it first, but since it is here and
+since it has a slightly different design and implementation I will continue to
+support it.
 
 ==Casting
 
-All replies are of class Simpler::Reply, so casting can be done in a way that works for you by defining your own methods.
+All replies are of class Simpler::Reply (a string subclass), so casting can be
+done in a way that works for you by defining your own methods.
 
 == Copyright
 
